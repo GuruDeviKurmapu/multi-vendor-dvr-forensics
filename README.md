@@ -1,5 +1,9 @@
 # Multi-Vendor DVR/NVR Forensic Analysis Tool for CCTV Evidence
 
+[![Forensic Tool CI](https://github.com/GuruDeviKurmapu/multi-vendor-dvr-forensics/actions/workflows/test.yml/badge.svg)](https://github.com/GuruDeviKurmapu/multi-vendor-dvr-forensics/actions)
+[![Python 3.10+](https://img.shields.io/badge/Python-3.10%20%7C%203.11%20%7C%203.12%20%7C%203.14-blue.svg)](#)
+[![Integrity SHA-256](https://img.shields.io/badge/Integrity-SHA--256-green.svg)](#)
+
 A clean, beginner-friendly academic digital forensic application designed for B.Tech Computer Science & Engineering capstone reviews and laboratory demonstrations.
 
 ---
