@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+
+{% block title %}Evidence Analysis - Forensic Workbench{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Evidence Analysis & Cryptographic Registry</h1>
+    <div class="page-subtitle">Inspect digital exhibits, verify SHA-256 integrity, and query across multi-vendor CCTV files</div>
+  </div>
+  <div>
+    <a href="{{ url_for('add_evidence') }}" class="btn btn-primary">+ Ingest Evidence</a>
+  </div>
+</div>
+
+<!-- Search & Filter Controls -->
+<form method="GET" action="{{ url_for('analysis') }}" class="filter-bar">
+  <!-- Keyword Search -->
+  <div class="filter-group" style="flex: 2;">
+    <label for="search">Search Keywords</label>
+    <input type="text" id="search" name="search" class="form-control" placeholder="Search by filename, exhibit ID, source or notes..." value="{{ search_query }}">
+  </div>
+
+  <!-- Filter by Case -->
+  <div class="filter-group">
+    <label for="case_id">Case</label>
+    <select id="case_id" name="case_id" class="form-control">
+      <option value="">All Cases</option>
+      {% for c in cases %}
+        <option value="{{ c.case_id }}" {% if selected_case == c.case_id %}selected{% endif %}>
+          {{ c.case_id }}
+        </option>
+      {% endfor %}
+    </select>
+  </div>
+
+  <!-- Filter by Vendor -->
+  <div class="filter-group">
+    <label for="vendor">Vendor</label>
+    <select id="vendor" name="vendor" class="form-control">
+      <option value="">All Vendors</option>
+      <option value="Hikvision" {% if selected_vendor == 'Hikvision' %}selected{% endif %}>Hikvision</option>
+      <option value="Dahua" {% if selected_vendor == 'Dahua' %}selected{% endif %}>Dahua</option>
+      <option value="Honeywell" {% if selected_vendor == 'Honeywell' %}selected{% endif %}>Honeywell</option>
+      <option value="Unknown/Other" {% if selected_vendor == 'Unknown/Other' %}selected{% endif %}>Unknown/Other</option>
+    </select>
+  </div>
+
+  <!-- Filter by Integrity Status -->
+  <div class="filter-group">
+    <label for="status">Integrity Status</label>
+    <select id="status" name="status" class="form-control">
+      <option value="">All Statuses</option>
+      <option value="Integrity Verified" {% if selected_status == 'Integrity Verified' %}selected{% endif %}>Integrity Verified</option>
+      <option value="Integrity Mismatch" {% if selected_status == 'Integrity Mismatch' %}selected{% endif %}>Integrity Mismatch</option>
+    </select>
+  </div>
+
+  <!-- Action Buttons -->
+  <div style="display: flex; gap: 8px;">
+    <button type="submit" class="btn btn-primary">Filter</button>
+    <a href="{{ url_for('analysis') }}" class="btn btn-secondary">Reset</a>
+  </div>
+</form>
+
+<!-- Evidence Analysis Table -->
+<div class="table-responsive">
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Exhibit ID</th>
+        <th>Filename</th>
+        <th>File Type</th>
+        <th>File Size</th>
+        <th>Vendor</th>
+        <th>Date Added</th>
+        <th>SHA-256 Hash</th>
+        <th>Integrity Status</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% if evidence_list %}
+        {% for ev in evidence_list %}
+          <tr>
+            <td><strong>{{ ev.evidence_id }}</strong></td>
+            <td>
+              <a href="{{ url_for('evidence_view', evidence_id=ev.evidence_id) }}" style="color: #1e3a8a; font-weight: 500; text-decoration: none;">
+                {{ ev.filename }}
+              </a>
+              <div style="font-size: 11px; color: #64748b;">Source: {{ ev.source }}</div>
+            </td>
+            <td><span class="badge badge-neutral">{{ ev.file_type }}</span></td>
+            <td>{{ ev.file_size | format_bytes }}</td>
+            <td><strong>{{ ev.vendor }}</strong></td>
+            <td style="white-space: nowrap; font-size: 12px;">{{ ev.uploaded_at }}</td>
+            <td>
+              <div style="display: flex; align-items: center; gap: 4px;">
+                <span class="hash-cell" title="{{ ev.sha256_current }}">{{ ev.sha256_current }}</span>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="copyHash('{{ ev.sha256_current }}')" title="Copy SHA-256 Hash" style="padding: 2px 6px;">
+                  &#128203;
+                </button>
+              </div>
+            </td>
+            <td>
+              {% if 'Verified' in ev.integrity_status %}
+                <span class="badge badge-verified">{{ ev.integrity_status }}</span>
+              {% else %}
+                <span class="badge badge-mismatch">{{ ev.integrity_status }}</span>
+              {% endif %}
+            </td>
+            <td style="white-space: nowrap;">
+              <a href="{{ url_for('evidence_view', evidence_id=ev.evidence_id) }}" class="btn btn-secondary btn-sm">
+                Examine Video &rarr;
+              </a>
+            </td>
+          </tr>
+        {% endfor %}
+      {% else %}
+        <tr>
+          <td colspan="9" style="text-align: center; color: #64748b; padding: 24px;">
+            No evidence files match your search criteria.
+          </td>
+        </tr>
+      {% endif %}
+    </tbody>
+  </table>
+</div>
+
+<div style="font-size: 11px; color: #64748b; margin-top: 8px;">
+  Showing {{ evidence_list|length }} evidence exhibits. Each exhibit stores both original acquisition hash and current verification hash.
+</div>
+{% endblock %}

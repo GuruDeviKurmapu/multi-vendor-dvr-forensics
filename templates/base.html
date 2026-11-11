@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}DVR/NVR Forensic Tool{% endblock %} - CCTV Evidence Analyzer</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+  <!-- Top Academic Header -->
+  <header class="top-header">
+    <div class="container header-flex">
+      <div>
+        <a href="{{ url_for('dashboard') }}" class="brand-title">CCTV FORENSIC WORKBENCH</a>
+        <span class="brand-subtitle">Multi-Vendor DVR/NVR Digital Evidence Analysis System</span>
+      </div>
+      <div class="user-status">
+        {% if session.get('user') %}
+          <span>Investigator: <strong>{{ session.get('user_name', 'Investigator') }}</strong></span>
+          <span>|</span>
+          <a href="{{ url_for('logout') }}">Sign Out</a>
+        {% else %}
+          <a href="{{ url_for('login') }}">Sign In</a>
+        {% endif %}
+      </div>
+    </div>
+  </header>
+
+  <!-- 6-Item Main Navigation -->
+  {% if session.get('user') %}
+  <nav class="main-nav">
+    <div class="container">
+      <ul class="nav-list">
+        <li>
+          <a href="{{ url_for('dashboard') }}" class="nav-link {% if request.endpoint == 'dashboard' %}active{% endif %}">
+            Dashboard
+          </a>
+        </li>
+        <li>
+          <a href="{{ url_for('cases') }}" class="nav-link {% if request.endpoint in ['cases', 'case_details'] %}active{% endif %}">
+            Cases
+          </a>
+        </li>
+        <li>
+          <a href="{{ url_for('add_evidence') }}" class="nav-link {% if request.endpoint == 'add_evidence' %}active{% endif %}">
+            Add Evidence
+          </a>
+        </li>
+        <li>
+          <a href="{{ url_for('analysis') }}" class="nav-link {% if request.endpoint in ['analysis', 'evidence_view'] %}active{% endif %}">
+            Evidence Analysis
+          </a>
+        </li>
+        <li>
+          <a href="{{ url_for('activity') }}" class="nav-link {% if request.endpoint == 'activity' %}active{% endif %}">
+            Activity Log
+          </a>
+        </li>
+        <li>
+          <a href="{{ url_for('reports') }}" class="nav-link {% if request.endpoint == 'reports' %}active{% endif %}">
+            Reports
+          </a>
+        </li>
+      </ul>
+    </div>
+  </nav>
+  {% endif %}
+
+  <!-- Main Body Content -->
+  <main class="main-content">
+    <div class="container">
+      <!-- Flash Alert Messages -->
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          <div class="alert-container">
+            {% for category, message in messages %}
+              <div class="alert alert-{{ category }}">
+                {{ message }}
+              </div>
+            {% endfor %}
+          </div>
+        {% endif %}
+      {% endwith %}
+
+      {% block content %}{% endblock %}
+    </div>
+  </main>
+
+  <!-- Clean Footer with Academic Compliance Statement -->
+  <footer class="app-footer">
+    <div class="container footer-content">
+      <div>
+        <strong>Multi-Vendor DVR/NVR Forensic Analysis Tool</strong> | B.Tech CSE Final Year Capstone Prototype
+      </div>
+      <div>
+        SHA-256 Non-Destructive Evidence Preservation Architecture
+      </div>
+    </div>
+  </footer>
+
+  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

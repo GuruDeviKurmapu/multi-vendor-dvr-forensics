@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+
+{% block title %}Activity Log - Chain of Custody Audit Trail{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Chain of Custody Activity Log</h1>
+    <div class="page-subtitle">Immutable audit trail of all forensic actions: uploads, hash computations, examinations, and reports</div>
+  </div>
+</div>
+
+<!-- Case Filter Bar -->
+<form method="GET" action="{{ url_for('activity') }}" class="filter-bar">
+  <div class="filter-group">
+    <label for="case_id">Filter by Investigation Case</label>
+    <select id="case_id" name="case_id" class="form-control" onchange="this.form.submit()">
+      <option value="">All Cases (Global Log)</option>
+      {% for c in cases %}
+        <option value="{{ c.case_id }}" {% if selected_case == c.case_id %}selected{% endif %}>
+          {{ c.case_id }} - {{ c.case_name }}
+        </option>
+      {% endfor %}
+    </select>
+  </div>
+  {% if selected_case %}
+    <div>
+      <a href="{{ url_for('activity') }}" class="btn btn-secondary">Clear Filter</a>
+    </div>
+  {% endif %}
+</form>
+
+<!-- Activity Log Table -->
+<div class="table-responsive">
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th style="width: 150px;">Timestamp</th>
+        <th style="width: 160px;">Action</th>
+        <th style="width: 140px;">Investigator</th>
+        <th style="width: 120px;">Case ID</th>
+        <th style="width: 130px;">Evidence ID</th>
+        <th>Audit Trail Details</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% if logs %}
+        {% for log in logs %}
+          <tr>
+            <td style="white-space: nowrap; font-size: 12px; color: #64748b;">
+              {{ log.timestamp }}
+            </td>
+            <td>
+              <strong>{{ log.action }}</strong>
+            </td>
+            <td>{{ log.performed_by }}</td>
+            <td>
+              {% if log.case_id %}
+                <a href="{{ url_for('case_details', case_id=log.case_id) }}" style="color: #1e3a8a; text-decoration: none;">
+                  {{ log.case_id }}
+                </a>
+              {% else %}
+                -
+              {% endif %}
+            </td>
+            <td>
+              {% if log.evidence_id %}
+                <a href="{{ url_for('evidence_view', evidence_id=log.evidence_id) }}" style="color: #1e3a8a; text-decoration: none;">
+                  {{ log.evidence_id }}
+                </a>
+              {% else %}
+                -
+              {% endif %}
+            </td>
+            <td>{{ log.details }}</td>
+          </tr>
+        {% endfor %}
+      {% else %}
+        <tr>
+          <td colspan="6" style="text-align: center; color: #64748b; padding: 24px;">
+            No activity logs found.
+          </td>
+        </tr>
+      {% endif %}
+    </tbody>
+  </table>
+</div>
+
+<div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px; padding: 12px; font-size: 11px; color: #64748b;">
+  <strong>Legal & Forensic Relevance:</strong> The Chain of Custody proves that evidence was handled in accordance with digital forensic standards (ISO/IEC 27037). Every ingestion, verification, and tamper test is permanently timestamped.
+</div>
+{% endblock %}

@@ -1,0 +1,4 @@
+# Multi-Vendor DVR/NVR Forensic Analysis Tool
+# Minimal dependencies required for the project:
+Flask>=3.0.0
+reportlab>=4.0.0

@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+
+{% block title %}Add Evidence - Forensic Workbench{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Acquire & Ingest CCTV Evidence</h1>
+    <div class="page-subtitle">Upload digital video files, compute SHA-256 cryptographic hashes, and identify hardware vendor</div>
+  </div>
+</div>
+
+<div style="display: grid; grid-template-columns: 2fr 1fr; gap: 24px;">
+
+  <!-- Evidence Upload Form -->
+  <div>
+    <div class="form-card">
+      <form method="POST" action="{{ url_for('add_evidence') }}" enctype="multipart/form-data">
+        
+        <!-- Case Association -->
+        <div class="form-group">
+          <label for="case_id">Associated Investigation Case *</label>
+          <select id="case_id" name="case_id" class="form-control" required>
+            <option value="">-- Select Investigation Case --</option>
+            {% for c in cases %}
+              <option value="{{ c.case_id }}" {% if preselected_case == c.case_id %}selected{% endif %}>
+                {{ c.case_id }} - {{ c.case_name }}
+              </option>
+            {% endfor %}
+          </select>
+          <span class="form-hint">Links this evidence to an established chain of custody case file</span>
+        </div>
+
+        <!-- Video File Selection -->
+        <div class="form-group">
+          <label for="evidence_file">Select CCTV Video Evidence File *</label>
+          <input type="file" id="evidence_file" name="evidence_file" class="form-control" required accept=".mp4,.avi,.dav,.mkv,.mov,.webm,.flv,.raw">
+          <span class="form-hint">Accepts MP4, AVI, DAV (Dahua), MKV, and other standard or proprietary CCTV containers</span>
+        </div>
+
+        <!-- Camera / Source Description -->
+        <div class="form-group">
+          <label for="source">Source Location / Camera Unit *</label>
+          <input type="text" id="source" name="source" class="form-control" placeholder="e.g. Camera 02 - Cash Counter Vault / Main Gate NVR" value="Camera 01 - Main Entrance" required>
+        </div>
+
+        <!-- Vendor Selection -->
+        <div class="form-group">
+          <label for="vendor">Vendor Identification (Rule-Based or Manual)</label>
+          <select id="vendor" name="vendor" class="form-control">
+            <option value="Auto-Detect" selected>Auto-Detect (Rule-Based Heuristic via Filename & Container)</option>
+            <option value="Hikvision">Hikvision</option>
+            <option value="Dahua">Dahua</option>
+            <option value="Honeywell">Honeywell</option>
+            <option value="Unknown/Other">Unknown / Other Vendor</option>
+          </select>
+          <span class="form-hint">Auto-detect examines filename conventions and container markers</span>
+        </div>
+
+        <!-- Investigator Notes -->
+        <div class="form-group">
+          <label for="notes">Acquisition & Intake Notes</label>
+          <textarea id="notes" name="notes" class="form-control" rows="3" placeholder="Recording environment, resolution, physical DVR serial number, extraction notes..."></textarea>
+        </div>
+
+        <button type="submit" class="btn btn-primary" style="padding: 10px 20px; font-size: 14px;">
+          Ingest Evidence & Calculate SHA-256 Hash
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Forensic Sidebar & Explanation -->
+  <div>
+    <div class="form-card" style="background-color: #f8fafc;">
+      <h3 style="margin-top: 0; color: #1e3a8a;">Forensic Ingestion Workflow</h3>
+      <ol style="margin-left: 18px; font-size: 12px; color: #334155; line-height: 1.6;">
+        <li><strong>Physical Preservation:</strong> The uploaded file is saved bit-exact into <code>evidence/original/</code> as a read-only master file.</li>
+        <li><strong>Working Copy:</strong> An exact bit-duplicate is created in <code>evidence/working/</code> for examination.</li>
+        <li><strong>Cryptographic Baseline:</strong> Python <code>hashlib.sha256</code> computes the 256-bit original hash.</li>
+        <li><strong>Rule-Based Vendor Heuristic:</strong> File naming syntax and container headers are analyzed to classify Hikvision, Dahua, Honeywell, or Unknown/Other.</li>
+        <li><strong>Audit Logging:</strong> Evidence upload and initial hash are logged in SQLite <code>activity_log</code>.</li>
+      </ol>
+    </div>
+
+    <div style="background-color: #fff; border: 1px solid #e2e8f0; border-radius: 4px; padding: 14px; font-size: 11px; color: #64748b; margin-top: 14px;">
+      <strong>Academic Scope:</strong> Supported formats include MP4 and WebM for in-browser playback. Proprietary containers (such as Dahua <code>.dav</code> or raw streams) are preserved intact without transcoding to respect forensic evidence fidelity.
+    </div>
+  </div>
+
+</div>
+{% endblock %}

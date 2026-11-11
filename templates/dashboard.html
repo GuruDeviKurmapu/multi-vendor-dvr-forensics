@@ -1,0 +1,173 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Digital Forensic Workbench{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Forensic Investigation Dashboard</h1>
+    <div class="page-subtitle">Multi-Vendor DVR/NVR Evidence Ingestion & Cryptographic Verification Center</div>
+  </div>
+  <div style="display: flex; gap: 8px;">
+    <a href="{{ url_for('cases') }}" class="btn btn-secondary">+ New Case</a>
+    <a href="{{ url_for('add_evidence') }}" class="btn btn-primary">+ Ingest Evidence</a>
+  </div>
+</div>
+
+<!-- 4 Core Metric Cards -->
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="stat-label">Total Cases</div>
+    <div class="stat-value">{{ stats.total_cases }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Total Evidence Files</div>
+    <div class="stat-value">{{ stats.total_evidence }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Videos Available</div>
+    <div class="stat-value">{{ stats.videos_available }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Recent Activities</div>
+    <div class="stat-value">{{ stats.recent_activities }}</div>
+  </div>
+</div>
+
+<!-- 2-Column Split for Quick Overviews -->
+<div style="display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 20px;">
+  
+  <!-- Left: Active Cases & Evidence -->
+  <div>
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+      <h2 style="margin: 0; border: none; padding: 0;">Active Cases</h2>
+      <a href="{{ url_for('cases') }}" style="font-size: 12px; color: #1e3a8a; text-decoration: none;">View All Cases &rarr;</a>
+    </div>
+
+    <div class="table-responsive">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Case ID</th>
+            <th>Case Name</th>
+            <th>Investigator</th>
+            <th>Status</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% if recent_cases %}
+            {% for c in recent_cases %}
+              <tr>
+                <td><strong>{{ c.case_id }}</strong></td>
+                <td>{{ c.case_name }}</td>
+                <td>{{ c.investigator_name }}</td>
+                <td><span class="badge badge-active">{{ c.status }}</span></td>
+                <td>
+                  <a href="{{ url_for('case_details', case_id=c.case_id) }}" class="btn btn-secondary btn-sm">Open Details</a>
+                </td>
+              </tr>
+            {% endfor %}
+          {% else %}
+            <tr>
+              <td colspan="5" style="text-align: center; color: #64748b; padding: 16px;">
+                No investigation cases registered yet. <a href="{{ url_for('cases') }}">Create the first case</a>.
+              </td>
+            </tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; margin-top: 20px;">
+      <h2 style="margin: 0; border: none; padding: 0;">Recent Evidence</h2>
+      <a href="{{ url_for('analysis') }}" style="font-size: 12px; color: #1e3a8a; text-decoration: none;">View All Evidence &rarr;</a>
+    </div>
+
+    <div class="table-responsive">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Evidence ID</th>
+            <th>Filename</th>
+            <th>Vendor</th>
+            <th>Size</th>
+            <th>Integrity Status</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% if recent_evidence %}
+            {% for ev in recent_evidence %}
+              <tr>
+                <td><strong>{{ ev.evidence_id }}</strong></td>
+                <td>{{ ev.filename }}</td>
+                <td><span class="badge badge-neutral">{{ ev.vendor }}</span></td>
+                <td>{{ ev.file_size | format_bytes }}</td>
+                <td>
+                  {% if 'Verified' in ev.integrity_status %}
+                    <span class="badge badge-verified">{{ ev.integrity_status }}</span>
+                  {% else %}
+                    <span class="badge badge-mismatch">{{ ev.integrity_status }}</span>
+                  {% endif %}
+                </td>
+                <td>
+                  <a href="{{ url_for('evidence_view', evidence_id=ev.evidence_id) }}" class="btn btn-secondary btn-sm">Examine</a>
+                </td>
+              </tr>
+            {% endfor %}
+          {% else %}
+            <tr>
+              <td colspan="6" style="text-align: center; color: #64748b; padding: 16px;">
+                No evidence ingested yet. <a href="{{ url_for('add_evidence') }}">Add evidence files</a>.
+              </td>
+            </tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Right: Recent Activities Audit Trail -->
+  <div>
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+      <h2 style="margin: 0; border: none; padding: 0;">Chain of Custody Activity</h2>
+      <a href="{{ url_for('activity') }}" style="font-size: 12px; color: #1e3a8a; text-decoration: none;">Full Audit Log &rarr;</a>
+    </div>
+
+    <div class="form-card" style="padding: 12px;">
+      {% if stats.recent_logs %}
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+          {% for log in stats.recent_logs %}
+            <div style="border-bottom: 1px solid #f1f5f9; padding-bottom: 8px;">
+              <div style="display: flex; justify-content: space-between; font-size: 11px; color: #64748b;">
+                <strong>{{ log.action }}</strong>
+                <span>{{ log.timestamp }}</span>
+              </div>
+              <div style="font-size: 12px; color: #1e293b; margin-top: 2px;">
+                {{ log.details }}
+              </div>
+              <div style="font-size: 11px; color: #94a3b8; margin-top: 2px;">
+                By: {{ log.performed_by }}{% if log.case_id %} | Case: {{ log.case_id }}{% endif %}
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p style="color: #64748b; font-size: 12px; text-align: center; margin: 12px 0;">No activities recorded yet.</p>
+      {% endif %}
+    </div>
+
+    <!-- Academic Information Box -->
+    <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px; padding: 14px; font-size: 12px; color: #334155;">
+      <strong style="color: #1e3a8a;">Academic Principles Reminder:</strong>
+      <ul style="margin: 6px 0 0 16px; line-height: 1.4;">
+        <li>Original evidence is strictly read-only in <code>evidence/original/</code>.</li>
+        <li>SHA-256 hashes detect any single-bit alteration instantly.</li>
+        <li>Analysis is performed exclusively on working copies in <code>evidence/working/</code>.</li>
+      </ul>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

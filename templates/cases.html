@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+
+{% block title %}Case Management - Forensic Workbench{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Case Management</h1>
+    <div class="page-subtitle">Register and oversee digital forensic investigation case files</div>
+  </div>
+</div>
+
+<div style="display: grid; grid-template-columns: 1fr 2fr; gap: 24px;">
+
+  <!-- Case Registration Form -->
+  <div>
+    <div class="form-card">
+      <h3 style="margin-top: 0; margin-bottom: 14px; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px;">
+        Register New Case
+      </h3>
+      <form method="POST" action="{{ url_for('create_case_route') }}">
+        <div class="form-group">
+          <label for="case_id">Case ID *</label>
+          <input type="text" id="case_id" name="case_id" class="form-control" placeholder="e.g. CASE-2026-002" required>
+          <span class="form-hint">Unique alphanumeric identifier</span>
+        </div>
+
+        <div class="form-group">
+          <label for="case_name">Case Name *</label>
+          <input type="text" id="case_name" name="case_name" class="form-control" placeholder="e.g. Bank ATM Perimeter Robbery" required>
+        </div>
+
+        <div class="form-group">
+          <label for="investigator_name">Investigator Name *</label>
+          <input type="text" id="investigator_name" name="investigator_name" class="form-control" value="{{ session.get('user_name', 'Lead Forensic Investigator') }}" required>
+        </div>
+
+        <div class="form-group">
+          <label for="description">Incident Description</label>
+          <textarea id="description" name="description" class="form-control" rows="3" placeholder="Brief summary of incident, date, location and CCTV units involved..."></textarea>
+        </div>
+
+        <button type="submit" class="btn btn-primary" style="width: 100%;">
+          Create Case File
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Cases List -->
+  <div>
+    <h3 style="margin-top: 0; margin-bottom: 14px;">Existing Cases ({{ cases|length }})</h3>
+    <div class="table-responsive">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Case ID</th>
+            <th>Case Name</th>
+            <th>Investigator</th>
+            <th>Created Date</th>
+            <th>Status</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% if cases %}
+            {% for c in cases %}
+              <tr>
+                <td><strong>{{ c.case_id }}</strong></td>
+                <td>{{ c.case_name }}</td>
+                <td>{{ c.investigator_name }}</td>
+                <td>{{ c.created_at }}</td>
+                <td><span class="badge badge-active">{{ c.status }}</span></td>
+                <td>
+                  <a href="{{ url_for('case_details', case_id=c.case_id) }}" class="btn btn-secondary btn-sm">
+                    Open Case Details
+                  </a>
+                </td>
+              </tr>
+            {% endfor %}
+          {% else %}
+            <tr>
+              <td colspan="6" style="text-align: center; color: #64748b; padding: 20px;">
+                No cases registered yet. Fill out the form on the left to create a case.
+              </td>
+            </tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

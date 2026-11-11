@@ -1,0 +1,187 @@
+{% extends "base.html" %}
+
+{% block title %}Examine: {{ evidence.filename }} - Forensic Video Viewer{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Evidence Examination: {{ evidence.filename }}</h1>
+    <div class="page-subtitle">Exhibit ID: <strong>{{ evidence.evidence_id }}</strong> | Case: <strong>{{ evidence.case_id }}</strong></div>
+  </div>
+  <div style="display: flex; gap: 8px;">
+    <a href="{{ url_for('analysis') }}" class="btn btn-secondary">&larr; Back to Analysis</a>
+    <a href="{{ url_for('download_evidence', evidence_id=evidence.evidence_id) }}" class="btn btn-secondary">&#128190; Download Evidence</a>
+  </div>
+</div>
+
+<div class="viewer-layout">
+
+  <!-- Left: Video Playback or Unsupported Message -->
+  <div>
+    {% if is_playable %}
+      <div class="video-container">
+        <video class="video-player" controls preload="metadata">
+          <source src="{{ url_for('stream_evidence', evidence_id=evidence.evidence_id) }}" type="video/mp4">
+          Your browser does not support HTML5 video streaming.
+        </video>
+      </div>
+      <div style="margin-top: 8px; font-size: 11px; color: #64748b; display: flex; justify-content: space-between;">
+        <span>Built-in Browser Video Player (HTML5 Native Decoder)</span>
+        <span>Streaming from: <code>evidence/working/</code></span>
+      </div>
+    {% else %}
+      <div class="video-fallback-box">
+        <div style="font-size: 32px; color: #94a3b8; margin-bottom: 12px;">&#128269;</div>
+        <h3 style="color: #0f172a; margin-bottom: 8px;">Direct Browser Video Preview Not Supported</h3>
+        <p style="font-size: 13px; color: #475569; max-width: 520px; margin: 0 auto 16px; line-height: 1.5;">
+          {{ play_message }}
+        </p>
+        <div style="background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 4px; padding: 12px; font-size: 11px; text-align: left; max-width: 520px; margin: 0 auto;">
+          <strong>Forensic Principle:</strong> Digital forensics prohibits automated on-the-fly transcoding or re-encoding of proprietary CCTV streams (e.g., Dahua <code>.dav</code> or raw containers) because modifying the container alters the cryptographic checksum. The file remains bit-exact and hash-verified.
+        </div>
+        <div style="margin-top: 16px;">
+          <a href="{{ url_for('download_evidence', evidence_id=evidence.evidence_id) }}" class="btn btn-primary">
+            Download File for Dedicated Player
+          </a>
+        </div>
+      </div>
+    {% endif %}
+
+    <!-- Intake & Examiner Notes -->
+    <div class="form-card" style="margin-top: 20px;">
+      <h3 style="margin-top: 0; font-size: 14px; border-bottom: 1px solid #e2e8f0; padding-bottom: 6px;">
+        Investigator Notes & Heuristic Observations
+      </h3>
+      <p style="font-size: 13px; color: #334155; margin: 8px 0;">
+        {{ evidence.notes or 'No specific notes recorded during intake.' }}
+      </p>
+      <div style="font-size: 11px; color: #64748b;">
+        Physical master stored at: <code>evidence/original/{{ evidence.evidence_id }}_{{ evidence.filename }}</code>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right: Metadata & Cryptographic Integrity Card -->
+  <div class="viewer-sidebar">
+
+    <!-- Metadata Card -->
+    <div class="meta-card">
+      <h3 style="margin-top: 0; font-size: 14px; border-bottom: 1px solid #e2e8f0; padding-bottom: 6px;">
+        Evidence Metadata
+      </h3>
+      <div class="meta-row">
+        <span class="meta-label">Exhibit ID:</span>
+        <span class="meta-val">{{ evidence.evidence_id }}</span>
+      </div>
+      <div class="meta-row">
+        <span class="meta-label">Associated Case:</span>
+        <span class="meta-val">
+          <a href="{{ url_for('case_details', case_id=evidence.case_id) }}" style="color: #1e3a8a;">
+            {{ evidence.case_id }}
+          </a>
+        </span>
+      </div>
+      <div class="meta-row">
+        <span class="meta-label">Camera / Source:</span>
+        <span class="meta-val">{{ evidence.source }}</span>
+      </div>
+      <div class="meta-row">
+        <span class="meta-label">Hardware Vendor:</span>
+        <span class="meta-val"><strong>{{ evidence.vendor }}</strong></span>
+      </div>
+      <div class="meta-row">
+        <span class="meta-label">Container Format:</span>
+        <span class="meta-val">{{ evidence.file_type }}</span>
+      </div>
+      <div class="meta-row">
+        <span class="meta-label">File Size:</span>
+        <span class="meta-val">{{ evidence.file_size | format_bytes }}</span>
+      </div>
+      <div class="meta-row">
+        <span class="meta-label">Acquired Date:</span>
+        <span class="meta-val">{{ evidence.uploaded_at }}</span>
+      </div>
+    </div>
+
+    <!-- Cryptographic Verification Card -->
+    <div class="meta-card" style="border-left: 4px solid #1e3a8a;">
+      <h3 style="margin-top: 0; font-size: 14px; border-bottom: 1px solid #e2e8f0; padding-bottom: 6px;">
+        SHA-256 Cryptographic Verification
+      </h3>
+
+      <div style="margin-top: 10px;">
+        <div style="font-size: 11px; font-weight: 600; color: #64748b; text-transform: uppercase;">
+          Original Hash (Baseline at Intake):
+        </div>
+        <div style="display: flex; align-items: center; gap: 4px; margin-top: 2px;">
+          <span class="hash-cell" style="max-width: 200px;" title="{{ evidence.sha256_original }}">
+            {{ evidence.sha256_original }}
+          </span>
+          <button type="button" class="btn btn-secondary btn-sm" onclick="copyHash('{{ evidence.sha256_original }}')">&#128203;</button>
+        </div>
+      </div>
+
+      <div style="margin-top: 12px;">
+        <div style="font-size: 11px; font-weight: 600; color: #64748b; text-transform: uppercase;">
+          Current File Hash (Working Copy):
+        </div>
+        <div style="display: flex; align-items: center; gap: 4px; margin-top: 2px;">
+          <span class="hash-cell" style="max-width: 200px;" title="{{ evidence.sha256_current }}">
+            {{ evidence.sha256_current }}
+          </span>
+          <button type="button" class="btn btn-secondary btn-sm" onclick="copyHash('{{ evidence.sha256_current }}')">&#128203;</button>
+        </div>
+      </div>
+
+      <div style="margin-top: 14px; padding-top: 10px; border-top: 1px solid #f1f5f9;">
+        <div style="font-size: 11px; font-weight: 600; color: #64748b; text-transform: uppercase;">
+          Integrity Status:
+        </div>
+        <div style="margin-top: 4px;">
+          {% if 'Verified' in evidence.integrity_status %}
+            <span class="badge badge-verified" style="font-size: 12px; padding: 5px 10px;">
+              &#10003; {{ evidence.integrity_status }}
+            </span>
+          {% else %}
+            <span class="badge badge-mismatch" style="font-size: 12px; padding: 5px 10px;">
+              &#9888; {{ evidence.integrity_status }}
+            </span>
+          {% endif %}
+        </div>
+      </div>
+
+      <form method="POST" action="{{ url_for('verify_integrity_route', evidence_id=evidence.evidence_id) }}" style="margin-top: 16px;">
+        <button type="submit" class="btn btn-primary" style="width: 100%;">
+          Verify Integrity Now (Recalculate SHA-256)
+        </button>
+      </form>
+    </div>
+
+    <!-- Academic Demonstration / Viva Controls Card -->
+    <div class="meta-card" style="background-color: #f8fafc;">
+      <h3 style="margin-top: 0; font-size: 13px; color: #475569; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px;">
+        Examiner Demonstration Controls
+      </h3>
+      <p style="font-size: 11px; color: #64748b; margin-top: 6px; line-height: 1.4;">
+        Demonstrate tamper detection for viva examinations. Alter the working copy to trigger an <strong>Integrity Mismatch</strong>, then restore it from the master original.
+      </p>
+
+      <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 12px;">
+        <form method="POST" action="{{ url_for('simulate_tamper_route', evidence_id=evidence.evidence_id) }}" onsubmit="return confirmAction('Simulate tampering by altering 4 bytes in the working copy?');">
+          <button type="submit" class="btn btn-danger btn-sm" style="width: 100%;">
+            Simulate Tampering (Alters Working Copy)
+          </button>
+        </form>
+
+        <form method="POST" action="{{ url_for('restore_working_copy_route', evidence_id=evidence.evidence_id) }}" onsubmit="return confirmAction('Restore working copy from untouched original evidence?');">
+          <button type="submit" class="btn btn-secondary btn-sm" style="width: 100%;">
+            Restore Working Copy from Pristine Original
+          </button>
+        </form>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+{% endblock %}

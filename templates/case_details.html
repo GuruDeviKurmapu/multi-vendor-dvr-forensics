@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+
+{% block title %}Case Details: {{ case.case_id }} - Forensic Workbench{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Case Details: {{ case.case_id }}</h1>
+    <div class="page-subtitle">{{ case.case_name }}</div>
+  </div>
+  <div style="display: flex; gap: 8px;">
+    <a href="{{ url_for('cases') }}" class="btn btn-secondary">&larr; Back to Cases</a>
+    <a href="{{ url_for('add_evidence', case_id=case.case_id) }}" class="btn btn-secondary">+ Ingest Evidence</a>
+    <a href="{{ url_for('generate_report_route', case_id=case.case_id) }}" class="btn btn-primary">&#128196; Generate PDF Report</a>
+  </div>
+</div>
+
+<!-- Case Metadata Card -->
+<div class="form-card" style="margin-bottom: 24px;">
+  <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;">
+    <div>
+      <div style="font-size: 11px; text-transform: uppercase; color: #64748b; font-weight: 600;">Investigator Assigned</div>
+      <div style="font-size: 14px; font-weight: 600; color: #0f172a; margin-top: 2px;">{{ case.investigator_name }}</div>
+    </div>
+    <div>
+      <div style="font-size: 11px; text-transform: uppercase; color: #64748b; font-weight: 600;">Date Created</div>
+      <div style="font-size: 14px; font-weight: 600; color: #0f172a; margin-top: 2px;">{{ case.created_at }}</div>
+    </div>
+    <div>
+      <div style="font-size: 11px; text-transform: uppercase; color: #64748b; font-weight: 600;">Status</div>
+      <div style="margin-top: 2px;"><span class="badge badge-active">{{ case.status }}</span></div>
+    </div>
+  </div>
+
+  <div style="margin-top: 14px; padding-top: 12px; border-top: 1px solid #f1f5f9;">
+    <div style="font-size: 11px; text-transform: uppercase; color: #64748b; font-weight: 600;">Incident Description</div>
+    <div style="font-size: 13px; color: #334155; margin-top: 4px;">
+      {{ case.description or 'No description provided.' }}
+    </div>
+  </div>
+</div>
+
+<!-- Evidence Table for this Case -->
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+  <h2 style="margin: 0; border: none; padding: 0;">Case Evidence Inventory ({{ evidence_list|length }})</h2>
+  <a href="{{ url_for('add_evidence', case_id=case.case_id) }}" class="btn btn-secondary btn-sm">+ Add Evidence to this Case</a>
+</div>
+
+<div class="table-responsive">
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Evidence ID</th>
+        <th>Filename</th>
+        <th>Vendor</th>
+        <th>Source</th>
+        <th>Size</th>
+        <th>Original SHA-256</th>
+        <th>Integrity Status</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% if evidence_list %}
+        {% for ev in evidence_list %}
+          <tr>
+            <td><strong>{{ ev.evidence_id }}</strong></td>
+            <td>{{ ev.filename }}</td>
+            <td><span class="badge badge-neutral">{{ ev.vendor }}</span></td>
+            <td>{{ ev.source }}</td>
+            <td>{{ ev.file_size | format_bytes }}</td>
+            <td class="hash-cell" title="{{ ev.sha256_original }}">{{ ev.sha256_original }}</td>
+            <td>
+              {% if 'Verified' in ev.integrity_status %}
+                <span class="badge badge-verified">{{ ev.integrity_status }}</span>
+              {% else %}
+                <span class="badge badge-mismatch">{{ ev.integrity_status }}</span>
+              {% endif %}
+            </td>
+            <td>
+              <a href="{{ url_for('evidence_view', evidence_id=ev.evidence_id) }}" class="btn btn-secondary btn-sm">
+                Examine / Verify
+              </a>
+            </td>
+          </tr>
+        {% endfor %}
+      {% else %}
+        <tr>
+          <td colspan="8" style="text-align: center; color: #64748b; padding: 24px;">
+            No evidence files linked to this case yet. 
+            <a href="{{ url_for('add_evidence', case_id=case.case_id) }}">Add evidence now</a>.
+          </td>
+        </tr>
+      {% endif %}
+    </tbody>
+  </table>
+</div>
+
+<!-- Case Specific Chain of Custody History -->
+<h2 style="margin-top: 24px; margin-bottom: 12px;">Case Audit Trail & Chain of Custody</h2>
+<div class="table-responsive">
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th style="width: 140px;">Timestamp</th>
+        <th style="width: 140px;">Action</th>
+        <th style="width: 140px;">Investigator</th>
+        <th>Details</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% if logs %}
+        {% for log in logs %}
+          <tr>
+            <td>{{ log.timestamp }}</td>
+            <td><strong>{{ log.action }}</strong></td>
+            <td>{{ log.performed_by }}</td>
+            <td>{{ log.details }}</td>
+          </tr>
+        {% endfor %}
+      {% else %}
+        <tr>
+          <td colspan="4" style="text-align: center; color: #64748b; padding: 16px;">
+            No activity logged for this case.
+          </td>
+        </tr>
+      {% endif %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}
